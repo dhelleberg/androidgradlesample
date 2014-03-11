@@ -1,5 +1,13 @@
 apply plugin: 'android'
 
+ext.versionFile = file('version.properties')  //here we store our version information
+
+
+task loadVersion {
+    project.ext.verCode = readVersion() //load it
+    project.ext.verName = "1.0"
+}
+
 android {
     compileSdkVersion 19
     buildToolsVersion "19.0.2"
@@ -7,8 +15,8 @@ android {
     defaultConfig {
         minSdkVersion 7
         targetSdkVersion 19
-        versionCode 1
-        versionName "1.0"
+        versionCode verCode  //use it
+        versionName verName
     }
     buildTypes {
         release {
@@ -22,3 +30,22 @@ dependencies {
     compile 'com.android.support:appcompat-v7:+'
     compile fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 }
+
+
+int readVersion() {
+    logger.quiet 'Reading the version file.'
+    if(!versionFile.exists()) {
+        throw new GradleException("Required version file does not exist: $versionFile.canonicalPath")
+    }
+
+    Properties versionProps = new Properties()
+    versionFile.withInputStream {
+        stream ->  versionProps.load(stream)
+    }
+    //for the java guys:
+    //versionProps.load(new FileInputStream(file("version.properties")))
+
+    versionProps.versionCode.toInteger()
+}
+
+
