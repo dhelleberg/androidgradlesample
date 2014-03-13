@@ -11,9 +11,18 @@ android {
         versionName "1.0"
     }
     buildTypes {
+        debug {
+            packageNameSuffix ".debug"
+            buildConfigField "String", "API_HOST", "\"http://dev.myservice.com\""
+        }
+        UAT.initWith(buildTypes.debug)
+        UAT {
+            buildConfigField "String", "API_HOST", "\"https://uat.myservice.com\""
+        }
         release {
-            runProguard false
+            runProguard true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            buildConfigField "String", "API_HOST", "\"https://api.myservice.com\""
         }
     }
 }
