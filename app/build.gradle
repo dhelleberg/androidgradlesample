@@ -1,18 +1,22 @@
 apply plugin: 'android'
 
-
-
 def buildTime = new Date().format("yyyy-MM-dd'|'HH:mm", TimeZone.getTimeZone("UTC"))
 def hostName = java.net.InetAddress.getLocalHost().getHostName()
 
-ext.versionFile = file(project.projectDir.getPath()+'/version.properties')  //here we store our version information
-
 
 task loadVersion {
-    inputs.file versionFile
-    project.ext.appVersion = readVersion()
+    tasks.whenTaskAdded { theTask ->
+        if (theTask.name.contains("pre") ) {
+            theTask.dependsOn project.tasks.loadVersion
+        }
+    }
 }
 
+loadVersion << {
+    project.ext.appVersion = readVersion()
+    android.defaultConfig.versionCode appVersion.versionCode
+    android.defaultConfig.versionName appVersion.versionName
+}
 
 android {
     compileSdkVersion 19
@@ -21,8 +25,6 @@ android {
     defaultConfig {
         minSdkVersion 7
         targetSdkVersion 19
-        versionCode appVersion.getVersionCode()
-        versionName appVersion.getVersionName()
         buildConfigField "String", "BUILD_TIME", "\"$buildTime\""
         buildConfigField "String", "BUILD_HOST", "\"$hostName\""
     }
@@ -86,29 +88,15 @@ class AppVersionInformation {
 
 
 AppVersionInformation readVersion() {
-    logger.quiet 'Reading the version file.'
-    if(!versionFile.exists()) {
-        throw new GradleException("Required version file does not exist: $versionFile.canonicalPath")
-    }
-
-    Properties versionProps = new Properties()
-    versionFile.withInputStream {
-        stream ->  versionProps.load(stream)
-    }
+    logger.quiet 'using version: '+rootProject.version
 
     AppVersionInformation appVersionInformation = new AppVersionInformation()
 
-    String version = versionProps.version
-    String[]versions = version.split("\\.")
-    if(versions.length != 3)
-        throw new GradleException("version need to have the format: M.m.p")
-    appVersionInformation.setVersion(Integer.parseInt(versions[0]),
-            Integer.parseInt(versions[1]),
-            Integer.parseInt(versions[2]))
-
-    appVersionInformation.versionName = versionProps.version
+    appVersionInformation.setVersion(rootProject.version.major,
+                                    rootProject.version.minor,
+                                    rootProject.version.build)
+    appVersionInformation.versionName = rootProject.version
 
     logger.quiet("appVersion: "+appVersionInformation)
-
     return appVersionInformation
 }
