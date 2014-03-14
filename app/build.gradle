@@ -3,6 +3,13 @@ apply plugin: 'android'
 def buildTime = new Date().format("yyyy-MM-dd'|'HH:mm", TimeZone.getTimeZone("UTC"))
 def hostName = java.net.InetAddress.getLocalHost().getHostName()
 
+ext.versionFile = file(project.projectDir.getPath()+'/version.properties')  //here we store our version information
+
+
+task loadVersion {
+    project.ext.appVersion = readVersion()
+}
+
 
 android {
     compileSdkVersion 19
@@ -11,8 +18,8 @@ android {
     defaultConfig {
         minSdkVersion 7
         targetSdkVersion 19
-        versionCode readVersion()
-        versionName "1.0"
+        versionCode appVersion.getVersionCode()
+        versionName appVersion.getVersionName()
         buildConfigField "String", "BUILD_TIME", "\"$buildTime\""
         buildConfigField "String", "BUILD_HOST", "\"$hostName\""
     }
@@ -50,11 +57,37 @@ dependencies {
 }
 
 
-int readVersion() {
+
+class AppVersionInformation {
+    int minorVersion
+    int majorVersion
+    int patchVersion
+
+    int versionCode
+
+    String versionName
+
+    void setVersion(int major, int minor, int patch) {
+        majorVersion = major
+        minorVersion = minor
+        patchVersion = patch
+
+        versionCode = majorVersion * 1000 + minorVersion * 100 + patchVersion * 10
+    }
+
+    String getVersionName() {
+        "$versionName - $majorVersion.$minorVersion.$patchVersion"
+    }
+
+    @Override
+    String toString() {
+        getVersionName()+"-$versionCode"
+    }
+}
+
+
+AppVersionInformation readVersion() {
     logger.quiet 'Reading the version file.'
-
-    File versionFile =  new File(project.projectDir.getPath()+"/version.properties")
-
     if(!versionFile.exists()) {
         throw new GradleException("Required version file does not exist: $versionFile.canonicalPath")
     }
@@ -63,8 +96,18 @@ int readVersion() {
     versionFile.withInputStream {
         stream ->  versionProps.load(stream)
     }
-    //for the java guys:
-    //versionProps.load(new FileInputStream(file("version.properties")))
 
-    versionProps.versionCode.toInteger()
+    AppVersionInformation appVersionInformation = new AppVersionInformation()
+
+    String version = versionProps.version
+    String[]versions = version.split("\\.")
+    appVersionInformation.setVersion(Integer.parseInt(versions[0]),
+            Integer.parseInt(versions[1]),
+            Integer.parseInt(versions[2]))
+
+    appVersionInformation.versionName = versionProps.versionDesc
+
+    logger.quiet("appVersion: "+appVersionInformation)
+
+    return appVersionInformation
 }
