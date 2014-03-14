@@ -7,8 +7,10 @@ ext.versionFile = file(project.projectDir.getPath()+'/version.properties')  //he
 
 
 task loadVersion {
+    inputs.file versionFile
     project.ext.appVersion = readVersion()
 }
+
 
 
 android {
