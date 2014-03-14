@@ -65,8 +65,10 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void onActivityCreated(Bundle savedInstanceState) {
             super.onActivityCreated(savedInstanceState);
+
             TextView buildDate = (TextView) getView().findViewById(R.id.main_textview_builddate);
             buildDate.setText(BuildConfig.BUILD_TIME);
+
             TextView buildHost = (TextView) getView().findViewById(R.id.main_textview_buildhost);
             buildHost.setText(BuildConfig.BUILD_HOST);
         }
