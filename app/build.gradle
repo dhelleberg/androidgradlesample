@@ -1,5 +1,7 @@
 apply plugin: 'android'
 
+
+
 def buildTime = new Date().format("yyyy-MM-dd'|'HH:mm", TimeZone.getTimeZone("UTC"))
 def hostName = java.net.InetAddress.getLocalHost().getHostName()
 
@@ -10,7 +12,6 @@ task loadVersion {
     inputs.file versionFile
     project.ext.appVersion = readVersion()
 }
-
 
 
 android {
@@ -77,10 +78,6 @@ class AppVersionInformation {
         versionCode = majorVersion * 1000 + minorVersion * 100 + patchVersion * 10
     }
 
-    String getVersionName() {
-        "$versionName - $majorVersion.$minorVersion.$patchVersion"
-    }
-
     @Override
     String toString() {
         getVersionName()+"-$versionCode"
@@ -103,11 +100,13 @@ AppVersionInformation readVersion() {
 
     String version = versionProps.version
     String[]versions = version.split("\\.")
+    if(versions.length != 3)
+        throw new GradleException("version need to have the format: M.m.p")
     appVersionInformation.setVersion(Integer.parseInt(versions[0]),
             Integer.parseInt(versions[1]),
             Integer.parseInt(versions[2]))
 
-    appVersionInformation.versionName = versionProps.versionDesc
+    appVersionInformation.versionName = versionProps.version
 
     logger.quiet("appVersion: "+appVersionInformation)
 
