@@ -2,7 +2,7 @@ apply plugin: 'android'
 
 def buildTime = new Date().format("yyyy-MM-dd'|'HH:mm", TimeZone.getTimeZone("UTC"))
 def hostName = java.net.InetAddress.getLocalHost().getHostName()
-
+def appName = "mtc-demo"
 
 task loadVersion {
     tasks.whenTaskAdded { theTask ->
@@ -20,7 +20,8 @@ loadVersion << {
     android.applicationVariants.all { variant ->
         def apkSuffix = "-${variant.mergedFlavor.versionName}"
         def originalApkFile = variant.outputFile
-        variant.outputFile = file(originalApkFile.getPath().replace(".apk", "${apkSuffix}.apk"))
+        def newApkFile = new File(originalApkFile.getParent(), appName+"-"+originalApkFile.name.replace(".apk", "${apkSuffix}.apk"))
+        variant.outputFile = newApkFile
     }
 }
 

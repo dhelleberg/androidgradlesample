@@ -1,2 +1,2 @@
 include ':app'
-project(":app").name = "mtcdemo-app"
+///project(":app").name = "mtcdemo-app"
