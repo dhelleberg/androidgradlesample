@@ -16,6 +16,12 @@ loadVersion << {
     project.ext.appVersion = readVersion()
     android.defaultConfig.versionCode appVersion.versionCode
     android.defaultConfig.versionName appVersion.versionName
+
+    android.applicationVariants.all { variant ->
+        def apkSuffix = "-${variant.mergedFlavor.versionName}"
+        def originalApkFile = variant.outputFile
+        variant.outputFile = file(originalApkFile.getPath().replace(".apk", "${apkSuffix}.apk"))
+    }
 }
 
 android {
