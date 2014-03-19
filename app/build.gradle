@@ -1,11 +1,29 @@
 apply plugin: 'android'
 
-ext.versionFile = file('version.properties')  //here we store our version information
 
+def buildTime = new Date().format("yyyy-MM-dd'|'HH:mm", TimeZone.getTimeZone("UTC"))
+def hostName = java.net.InetAddress.getLocalHost().getHostName()
+def appName = "mtc-demo"
 
 task loadVersion {
-    project.ext.verCode = readVersion() //load it
-    project.ext.verName = "1.0"
+    tasks.whenTaskAdded { theTask ->
+        if (theTask.name.contains("pre") ) {
+            theTask.dependsOn project.tasks.loadVersion
+        }
+    }
+}
+
+loadVersion << {
+    project.ext.appVersion = readVersion()
+    android.defaultConfig.versionCode appVersion.versionCode
+    android.defaultConfig.versionName appVersion.versionName
+
+    android.applicationVariants.all { variant ->
+        def apkSuffix = "-${variant.mergedFlavor.versionName}"
+        def originalApkFile = variant.outputFile
+        def newApkFile = new File(originalApkFile.getParent(), appName+"-"+originalApkFile.name.replace(".apk", "${apkSuffix}.apk"))
+        variant.outputFile = newApkFile
+    }
 }
 
 android {
@@ -17,11 +35,33 @@ android {
         targetSdkVersion 19
         versionCode verCode  //use it
         versionName verName
+        buildConfigField "String", "BUILD_TIME", "\"$buildTime\""
+        buildConfigField "String", "BUILD_HOST", "\"$hostName\""
     }
-    buildTypes {
+
+    signingConfigs {
         release {
-            runProguard false
+            storeFile file("../my-release-key.keystore")
+            storePassword "hellonsa"
+            keyAlias "release"
+            keyPassword "hellonsa"
+        }
+    }
+
+    buildTypes {
+        debug {
+            packageNameSuffix ".debug"
+            buildConfigField "String", "API_HOST", "\"http://dev.myservice.com\""
+        }
+        UAT.initWith(buildTypes.debug)
+        UAT {
+            buildConfigField "String", "API_HOST", "\"https://uat.myservice.com\""
+        }
+        release {
+            runProguard true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            buildConfigField "String", "API_HOST", "\"https://api.myservice.com\""
+            signingConfig signingConfigs.release
         }
     }
 }
@@ -32,20 +72,42 @@ dependencies {
 }
 
 
-int readVersion() {
-    logger.quiet 'Reading the version file.'
-    if(!versionFile.exists()) {
-        throw new GradleException("Required version file does not exist: $versionFile.canonicalPath")
+
+class AppVersionInformation {
+    int minorVersion
+    int majorVersion
+    int patchVersion
+
+    int versionCode
+
+    String versionName
+
+    void setVersion(int major, int minor, int patch) {
+        majorVersion = major
+        minorVersion = minor
+        patchVersion = patch
+
+        versionCode = majorVersion * 1000 + minorVersion * 100 + patchVersion * 10
     }
 
-    Properties versionProps = new Properties()
-    versionFile.withInputStream {
-        stream ->  versionProps.load(stream)
+    @Override
+    String toString() {
+        getVersionName()+"-$versionCode"
     }
-    //for the java guys:
-    //versionProps.load(new FileInputStream(file("version.properties")))
-
-    versionProps.versionCode.toInteger()
 }
 
+
+AppVersionInformation readVersion() {
+    logger.quiet 'using version: '+rootProject.version
+
+    AppVersionInformation appVersionInformation = new AppVersionInformation()
+
+    appVersionInformation.setVersion(rootProject.version.major,
+                                    rootProject.version.minor,
+                                    rootProject.version.build)
+    appVersionInformation.versionName = rootProject.version
+
+    logger.quiet("appVersion: "+appVersionInformation)
+    return appVersionInformation
+}
 
