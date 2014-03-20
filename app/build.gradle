@@ -33,8 +33,6 @@ android {
     defaultConfig {
         minSdkVersion 7
         targetSdkVersion 19
-        versionCode verCode  //use it
-        versionName verName
         buildConfigField "String", "BUILD_TIME", "\"$buildTime\""
         buildConfigField "String", "BUILD_HOST", "\"$hostName\""
     }
