@@ -18,11 +18,14 @@ loadVersion << {
     android.defaultConfig.versionCode appVersion.versionCode
     android.defaultConfig.versionName appVersion.versionName
 
-    android.applicationVariants.all { variant ->
-        def apkSuffix = "-${variant.mergedFlavor.versionName}"
-        def originalApkFile = variant.outputFile
-        def newApkFile = new File(originalApkFile.getParent(), appName+"-"+originalApkFile.name.replace(".apk", "${apkSuffix}.apk"))
-        variant.outputFile = newApkFile
+    //only manipulate the apk name when running on jenkins, as android studio fails to install custom apk
+    if(System.getenv("BUILD_NUMBER") != null) {
+        android.applicationVariants.all { variant ->
+            def apkSuffix = "-${variant.mergedFlavor.versionName}"
+            def originalApkFile = variant.outputFile
+            def newApkFile = new File(originalApkFile.getParent(), appName + "-" + originalApkFile.name.replace(".apk", "${apkSuffix}.apk"))
+            variant.outputFile = newApkFile
+        }
     }
 }
 
