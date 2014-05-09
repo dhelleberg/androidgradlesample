@@ -72,6 +72,9 @@ public class MainActivity extends ActionBarActivity {
 
             TextView buildHost = (TextView) getView().findViewById(R.id.main_textview_buildhost);
             buildHost.setText(BuildConfig.BUILD_HOST);
+
+            TextView url = (TextView) getView().findViewById(R.id.main_textview_url);
+            url.setText(BuildConfig.API_HOST);
         }
     }
 
