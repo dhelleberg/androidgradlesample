@@ -2,7 +2,7 @@ apply plugin: 'android'
 
 def buildTime = new Date().format("yyyy-MM-dd'|'HH:mm", TimeZone.getTimeZone("UTC"))
 def hostName = java.net.InetAddress.getLocalHost().getHostName()
-def appName = "mtc-demo"
+def appName = "jax-demo"
 
 task loadVersion {
     tasks.whenTaskAdded { theTask ->
@@ -27,7 +27,7 @@ loadVersion << {
 
 android {
     compileSdkVersion 19
-    buildToolsVersion "19.0.2"
+    buildToolsVersion "19.0.3"
 
     defaultConfig {
         minSdkVersion 7
