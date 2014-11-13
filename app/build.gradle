@@ -2,34 +2,24 @@ apply plugin: 'android'
 
 def buildTime = new Date().format("yyyy-MM-dd'|'HH:mm", TimeZone.getTimeZone("UTC"))
 def hostName = java.net.InetAddress.getLocalHost().getHostName()
-def appName = "mtc-demo"
+def appName = "bosch-demo"
 
-task loadVersion {
-    tasks.whenTaskAdded { theTask ->
-        if (theTask.name.contains("pre") ) {
-            theTask.dependsOn project.tasks.loadVersion
-        }
-    }
-}
-
-loadVersion << {
-    project.ext.appVersion = readVersion()
-    android.defaultConfig.versionCode appVersion.versionCode
-    android.defaultConfig.versionName appVersion.versionName
-
-    android.applicationVariants.all { variant ->
+android.applicationVariants.all { variant ->
         def apkSuffix = "-${variant.mergedFlavor.versionName}"
         def originalApkFile = variant.outputFile
-        def newApkFile = new File(originalApkFile.getParent(), appName+"-"+originalApkFile.name.replace(".apk", "${apkSuffix}.apk"))
+        def newApkFile = new File(originalApkFile.getParent(), appName + "-" + originalApkFile.name.replace(".apk", "${apkSuffix}.apk"))
         variant.outputFile = newApkFile
-    }
 }
+
+import org.ajoberstar.grgit.*
 
 android {
     compileSdkVersion 19
-    buildToolsVersion "19.0.3"
+    buildToolsVersion "19.1.0"
 
     defaultConfig {
+        versionCode readVersion().versionCode
+        versionName readVersion().versionName
         minSdkVersion 7
         targetSdkVersion 19
         buildConfigField "String", "BUILD_TIME", "\"$buildTime\""
@@ -55,16 +45,15 @@ android {
             buildConfigField "String", "API_HOST", "\"https://uat.myservice.com\""
         }
         release {
-            runProguard true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
             buildConfigField "String", "API_HOST", "\"https://api.myservice.com\""
             signingConfig signingConfigs.release
+            minifyEnabled false
         }
     }
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:+'
+    compile 'com.android.support:appcompat-v7:20.0.+'
     compile fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 }
 
@@ -95,15 +84,22 @@ class AppVersionInformation {
 
 
 AppVersionInformation readVersion() {
-    logger.quiet 'using version: '+rootProject.version
 
     AppVersionInformation appVersionInformation = new AppVersionInformation()
 
-    appVersionInformation.setVersion(rootProject.version.major,
-                                    rootProject.version.minor,
-                                    rootProject.version.build)
-    appVersionInformation.versionName = rootProject.version
+    ext.repo = Grgit.open(rootProject.file('.'))
+    def tags =  ext.repo.tag.list()
+    for(tag in tags) {
+        def tagName = tag.getName()
+        String[]versions = tagName.split("\\.")
+        if(versions.length == 3)
+            appVersionInformation.setVersion(Integer.parseInt(versions[0]),
+                    Integer.parseInt(versions[1]),
+                    Integer.parseInt(versions[2]))
 
-    logger.quiet("appVersion: "+appVersionInformation)
-    return appVersionInformation
+            appVersionInformation.versionName = tagName
+            
+            return appVersionInformation
+    }
+
 }
