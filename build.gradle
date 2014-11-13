@@ -8,6 +8,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:0.14.+'
         classpath 'org.kercheval:GradleCMPlugin:+'
+        classpath 'org.ajoberstar:grgit:0.4.0'
     }
     dependencies {
     }
@@ -19,7 +20,8 @@ allprojects {
     }
 }
 
-apply plugin: 'buildversion'
+/*
+apply plugin: 'buildvcs'
 
 buildversion {
     autoincrement = false
@@ -29,3 +31,4 @@ buildversion {
 buildversion << {
     println project.version
 }
+*/

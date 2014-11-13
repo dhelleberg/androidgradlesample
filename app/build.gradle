@@ -3,6 +3,13 @@ apply plugin: 'android'
 def buildTime = new Date().format("yyyy-MM-dd'|'HH:mm", TimeZone.getTimeZone("UTC"))
 def hostName = java.net.InetAddress.getLocalHost().getHostName()
 
+import org.ajoberstar.grgit.*
+ext.repo = Grgit.open(rootProject.file('.'))
+def tags =  ext.repo.tag.list()
+tags.each { tag ->
+    String t = tag.getName()
+    println("tname: $t")
+}
 
 task loadVersion {
     tasks.whenTaskAdded { theTask ->
