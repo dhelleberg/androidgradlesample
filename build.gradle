@@ -3,11 +3,9 @@
 buildscript {
     repositories {
         jcenter()
-        maven { url 'http://kercheval.org/mvn-repo/releases' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:0.14.+'
-        classpath 'org.kercheval:GradleCMPlugin:+'
         classpath 'org.ajoberstar:grgit:0.4.0'
     }
     dependencies {
@@ -20,15 +18,3 @@ allprojects {
     }
 }
 
-/*
-apply plugin: 'buildvcs'
-
-buildversion {
-    autoincrement = false
-    version.setPattern('%M%.%m%.%b%')
-
-}
-buildversion << {
-    println project.version
-}
-*/
