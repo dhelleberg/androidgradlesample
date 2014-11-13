@@ -3,38 +3,28 @@ apply plugin: 'android'
 
 def buildTime = new Date().format("yyyy-MM-dd'|'HH:mm", TimeZone.getTimeZone("UTC"))
 def hostName = java.net.InetAddress.getLocalHost().getHostName()
-def appName = "jax-demo"
 
-task loadVersion {
-    tasks.whenTaskAdded { theTask ->
-        if (theTask.name.contains("pre") ) {
-            theTask.dependsOn project.tasks.loadVersion
-        }
+def appName = "bosch-demo"
+//only manipulate the apk name when running on jenkins, as android studio fails to install custom apk
+if(System.getenv("BUILD_NUMBER") != null) {
+
+    android.applicationVariants.all { variant ->
+        def apkSuffix = "-${variant.mergedFlavor.versionName}"
+        def originalApkFile = variant.outputFile
+        def newApkFile = new File(originalApkFile.getParent(), appName + "-" + originalApkFile.name.replace(".apk", "${apkSuffix}.apk"))
+        variant.outputFile = newApkFile
     }
 }
-
-loadVersion << {
-    project.ext.appVersion = readVersion()
-    android.defaultConfig.versionCode appVersion.versionCode
-    android.defaultConfig.versionName appVersion.versionName
-
-    //only manipulate the apk name when running on jenkins, as android studio fails to install custom apk
-    if(System.getenv("BUILD_NUMBER") != null) {
-        android.applicationVariants.all { variant ->
-            def apkSuffix = "-${variant.mergedFlavor.versionName}"
-            def originalApkFile = variant.outputFile
-            def newApkFile = new File(originalApkFile.getParent(), appName + "-" + originalApkFile.name.replace(".apk", "${apkSuffix}.apk"))
-            variant.outputFile = newApkFile
-        }
-    }
-}
+import org.ajoberstar.grgit.*
 
 android {
     compileSdkVersion 19
-    buildToolsVersion "19.0.3"
+    buildToolsVersion "19.1.0"
 
     defaultConfig {
-        minSdkVersion 9
+        versionCode readVersion().versionCode
+        versionName readVersion().versionName
+        minSdkVersion 7
         targetSdkVersion 19
         buildConfigField "String", "BUILD_TIME", "\"$buildTime\""
         buildConfigField "String", "BUILD_HOST", "\"$hostName\""
@@ -61,10 +51,9 @@ android {
             buildConfigField "String", "API_HOST", "\"https://uat.myservice.com\""
         }
         release {
-            runProguard true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
             buildConfigField "String", "API_HOST", "\"https://api.myservice.com\""
             signingConfig signingConfigs.release
+            minifyEnabled false
         }
     }
     packagingOptions {
@@ -76,14 +65,10 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:+'
+    compile 'com.android.support:appcompat-v7:20.0.+'
     compile fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 
-    androidTestCompile ('com.jakewharton.espresso:espresso:1.1-r3') {
-        'org.hamcrest:hamcrest-core:1.1'
-        'org.hamcrest:hamcrest-library:1.1'
-        'org.hamcrest:hamcrest-integration:1.1'
-    }
+    androidTestCompile files('test-libs/espresso-contrib-1.1-bundled.jar')
 }
 
 
@@ -113,16 +98,23 @@ class AppVersionInformation {
 
 
 AppVersionInformation readVersion() {
-    logger.quiet 'using version: '+rootProject.version
 
     AppVersionInformation appVersionInformation = new AppVersionInformation()
 
-    appVersionInformation.setVersion(rootProject.version.major,
-                                    rootProject.version.minor,
-                                    rootProject.version.build)
-    appVersionInformation.versionName = rootProject.version
+    ext.repo = Grgit.open(rootProject.file('.'))
+    def tags =  ext.repo.tag.list()
+    for(tag in tags) {
+        def tagName = tag.getName()
+        String[]versions = tagName.split("\\.")
+        if(versions.length == 3)
+            appVersionInformation.setVersion(Integer.parseInt(versions[0]),
+                    Integer.parseInt(versions[1]),
+                    Integer.parseInt(versions[2]))
 
-    logger.quiet("appVersion: "+appVersionInformation)
-    return appVersionInformation
+            appVersionInformation.versionName = tagName
+            
+            return appVersionInformation
+    }
+
 }
 
