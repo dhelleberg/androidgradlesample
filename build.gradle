@@ -2,18 +2,20 @@
 
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
         maven { url 'http://kercheval.org/mvn-repo/releases' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.10.+'
+        classpath 'com.android.tools.build:gradle:0.14.+'
         classpath 'org.kercheval:GradleCMPlugin:+'
+    }
+    dependencies {
     }
 }
 
 allprojects {
     repositories {
-        mavenCentral()
+        jcenter()
     }
 }
 
@@ -27,5 +29,3 @@ buildversion {
 buildversion << {
     println project.version
 }
-
-
